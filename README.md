@@ -1,7 +1,7 @@
 # Hannukah of Data: 2022 [5783]
 
-These are my solutions in [Pandas](https://pandas.pydata.org/) for Hannukah of
-Data 2022.
+These are my solutions in [Pandas](https://pandas.pydata.org/) for [Hannukah of
+Data 2022](https://hanukkah.bluebird.sh/5783/).
 
 I attempted for most of my answers to be as single execution as possible.
 Leveraging [`pd.DataFrame.pipe`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.pipe.html)

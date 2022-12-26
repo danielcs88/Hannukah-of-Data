@@ -1,6 +1,7 @@
 # %%
 # pylint: disable=wrong-import-position missing-module-docstring invalid-name
 import os
+
 # %% [markdown]
 # # Hanukkah of Data/5783
 #
@@ -66,7 +67,7 @@ password = 5783 - 6
 print(password)
 
 # %%
-os.system(f'unzip -P {password} noahs-csv -d noahs-csv')
+os.system(f"unzip -P {password} noahs-csv -d noahs-csv")
 
 # %% [markdown]
 # # Puzzle 1

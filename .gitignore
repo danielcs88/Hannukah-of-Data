@@ -78,7 +78,10 @@ target/
 .ipynb_checkpoints
 
 # Pycharm
-.idea/
+.idea
+.idea/*
+.idea/Hannukah-of-Data.iml
+
 
 # IPython
 profile_default/

@@ -124,6 +124,7 @@ customers = pd.read_csv(
     "noahs-csv/noahs-customers.csv", parse_dates=["birthdate"]
 ).drop_duplicates(subset=["customerid"])
 
+
 # %% [markdown]
 # ### Idea
 #
@@ -268,7 +269,6 @@ puzzle_2 = (
     )
     .filter(customers.columns)
 ).drop_duplicates()
-
 
 # %%
 display(puzzle_2.pipe(set_customer_id_index))
@@ -778,12 +778,19 @@ display(puzzle_7.pipe(set_customer_id_index))
 # %%
 print(answer(puzzle_7))
 
-# %% [markdown]
-# “Oh yes, that magnificant Persian carpet! An absolute masterpiece, with a variety of interesting animals congregating around a Tree of Life. As a collector, I couldn’t believe when it fell into my lap.
+# %% [markdown] “Oh yes, that magnificant Persian carpet! An absolute
+# masterpiece, with a variety of interesting animals congregating around a Tree
+# of Life. As a collector, I couldn’t believe when it fell into my lap.
 #
-# “A friend of mine had taken it off her brother’s hands, and she didn’t know what to do with it. I saw her one day, and she was about to put an old rug out at the curb. It looked like it had been through a lot, but it was remarkably not that dirty. It still took quite a bit of effort and no small amount of rug cleaner, but ultimately I managed to get the last bits of grime out of it.
+# “A friend of mine had taken it off her brother’s hands, and she didn’t know
+# what to do with it. I saw her one day, and she was about to put an old rug out
+# at the curb. It looked like it had been through a lot, but it was remarkably
+# not that dirty. It still took quite a bit of effort and no small amount of rug
+# cleaner, but ultimately I managed to get the last bits of grime out of it.
 #
-# “I actually live right down the street from Noah’s Market–I’m a huge fan and I shop there all the time! I even have a one-of-a-kind scale model of Noah’s Ark that makes a complete set of Noah’s collectibles.
+# “I actually live right down the street from Noah’s Market–I’m a huge fan and I
+# shop there all the time! I even have a one-of-a-kind scale model of Noah’s Ark
+# that makes a complete set of Noah’s collectibles.
 #
 # “I would love for Noah to have his rug once again to enjoy.”
 

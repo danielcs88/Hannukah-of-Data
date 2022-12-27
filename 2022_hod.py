@@ -665,7 +665,8 @@ colors = (
 )
 
 # %% [markdown]
-# Here I queried for products that are over \$100 because one of these results isn't a color
+# Here I queried for products that are over \$100 because one of these results
+# isn't a color
 
 # %%
 print(colors)

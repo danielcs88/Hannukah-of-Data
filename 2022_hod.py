@@ -779,9 +779,10 @@ display(puzzle_7.pipe(set_customer_id_index))
 # %%
 print(answer(puzzle_7))
 
-# %% [markdown] “Oh yes, that magnificant Persian carpet! An absolute
-# masterpiece, with a variety of interesting animals congregating around a Tree
-# of Life. As a collector, I couldn’t believe when it fell into my lap.
+# %% [markdown]
+# “Oh yes, that magnificant Persian carpet! An absolute masterpiece, with a
+# variety of interesting animals congregating around a Tree of Life. As a
+# collector, I couldn’t believe when it fell into my lap.
 #
 # “A friend of mine had taken it off her brother’s hands, and she didn’t know
 # what to do with it. I saw her one day, and she was about to put an old rug out

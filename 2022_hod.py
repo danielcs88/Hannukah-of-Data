@@ -121,7 +121,7 @@ import pyperclip
 from IPython.display import display
 
 customers = pd.read_csv(
-    "noahs-csv/noahs-customers.csv", parse_dates=["birthdate"]
+    "noahs-csv/noahs-customers.zip", parse_dates=["birthdate"]
 ).drop_duplicates(subset=["customerid"])
 
 
@@ -247,9 +247,9 @@ print(answer(puzzle_1))
 # find their phone number?”
 
 # %%
-orders = pd.read_csv("noahs-csv/noahs-orders.csv", parse_dates=["ordered", "shipped"])
-orders_items = pd.read_csv("noahs-csv/noahs-orders_items.csv")
-products = pd.read_csv("noahs-csv/noahs-products.csv")
+orders = pd.read_csv("noahs-csv/noahs-orders.zip", parse_dates=["ordered", "shipped"])
+orders_items = pd.read_csv("noahs-csv/noahs-orders_items.zip")
+products = pd.read_csv("noahs-csv/noahs-products.zip")
 
 # %%
 puzzle_2 = (

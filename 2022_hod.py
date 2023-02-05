@@ -67,7 +67,7 @@ password = 5783 - 6
 print(password)
 
 # %%
-os.system(f"unzip -P {password} noahs-csv -d noahs-csv")
+os.system(f"unzip -P {password} noahs-csv")
 
 # %% [markdown]
 # # Puzzle 1
@@ -171,8 +171,8 @@ puzzle_1 = (
     customers.loc[~customers["name"].str.endswith(("II", "III", "IV", "Jr."))]
     .copy()
     .assign(
-        last_name=customers["name"].str.split().str[-1].str.lower(),
-        length=lambda df: df["last_name"].apply(len),
+        last_name=customers["name"].str.split().str[-1].str.lower().astype("string"),
+        length=lambda df: df["last_name"].str.len(),
     )
     .query("length == 10")
     .assign(
@@ -434,7 +434,7 @@ puzzle_4 = customers.loc[
     customers["customerid"].isin(
         orders.loc[(orders["ordered"].dt.hour < 5) & (orders["shipped"].dt.hour < 5)]
         .merge(orders_items, on="orderid")
-        .pipe(lambda df: df.loc[df["sku"].str[:3] == "BKY"])
+        .loc[lambda df: df["sku"].str[:3] == "BKY"]
         .query("qty > 1")["customerid"]
         .mode()
     )
@@ -477,15 +477,13 @@ puzzle_5 = customers.loc[
         .merge(orders, on="customerid")
         .merge(orders_items, on="orderid")
         .merge(products, on="sku")
-        .pipe(
-            lambda df: df.loc[
-                df["sku"].isin(
-                    products.loc[products["desc"].str.lower().str.contains("cat")][
-                        "sku"
-                    ].unique()
-                )
-            ]
-        )["customerid"]
+        .loc[
+            lambda df: df["sku"].isin(
+                products.loc[products["desc"].str.lower().str.contains("cat")][
+                    "sku"
+                ].unique()
+            )
+        ]["customerid"]
         .mode()
         .iloc[0]
     )
@@ -706,22 +704,16 @@ puzzle_7 = customers.loc[
         orders.pipe(filter_in_store_orders)
         .merge(orders_items.merge(colored_products, on="sku"), on="orderid")
         .pipe(date_hour)
-        .pipe(
-            lambda df: df.loc[
-                (df["date_hour"].isin(emily_in_color["date_hour"].unique()))
-                & (
-                    df["desc_color_agnostic"].isin(
-                        emily_in_color["desc_color_agnostic"]
-                    )
-                )
-            ]
-        )
+        .loc[
+            lambda df: (df["date_hour"].isin(emily_in_color["date_hour"].unique()))
+            & (df["desc_color_agnostic"].isin(emily_in_color["desc_color_agnostic"]))
+        ]
         .groupby("date_hour")["customerid"]
         .sum()
         - puzzle_6["customerid"].iloc[0]
     )
     .to_frame()
-    .pipe(lambda df: df.loc[df["customerid"] != puzzle_6["customerid"].iloc[0]])
+    .loc[lambda df: df["customerid"] != puzzle_6["customerid"].iloc[0]]
     .squeeze()
 ].copy()
 
@@ -761,13 +753,11 @@ puzzle_7 = customers.loc[
     == (
         orders.merge(orders_items, on="orderid")
         .set_index("customerid")
-        .pipe(
-            lambda df: df.loc[
-                orders.merge(orders_items, on="orderid")["customerid"]
-                .value_counts()
-                .index
-            ]
-        )
+        .loc[
+            lambda df: orders.merge(orders_items, on="orderid")["customerid"]
+            .value_counts()
+            .index
+        ]
         .reset_index()["index"]
         .iloc[0]
     )

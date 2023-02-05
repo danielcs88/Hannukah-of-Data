@@ -171,7 +171,7 @@ puzzle_1 = (
     customers.loc[~customers["name"].str.endswith(("II", "III", "IV", "Jr."))]
     .copy()
     .assign(
-        last_name=customers["name"].str.split().str[-1].str.lower().astype("string"),
+        last_name=customers["name"].str.split().str[-1].str.lower(),
         length=lambda df: df["last_name"].str.len(),
     )
     .query("length == 10")

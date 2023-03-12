@@ -164,7 +164,8 @@ def translate_char_to_phone_num(char: str) -> int:
 
 
 # %%
-set_customer_id_index = lambda df: df.set_index("customerid")
+def set_customer_id_index(df):
+    return df.set_index("customerid")
 
 # %%
 puzzle_1 = (

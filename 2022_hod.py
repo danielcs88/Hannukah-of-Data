@@ -196,7 +196,7 @@ display(puzzle_1.pipe(set_customer_id_index))
 
 
 # %%
-def answer(df: Union[pd.DataFrame, pd.Series]) -> str:
+def answer(df: pd.DataFrame | pd.Series) -> str:
     r"""
     Returns answer, in this case, the phone number and copies to clipboard.
 

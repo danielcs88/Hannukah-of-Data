@@ -90,6 +90,12 @@ from IPython.display import display
 
 # %%
 customers = pd.read_csv("5784/noahs-customers.csv.zip", parse_dates=["birthdate"])
+orders = pd.read_csv("5784/noahs-orders.csv.zip", parse_dates=["ordered", "shipped"])
+orders_items = pd.read_csv("5784/noahs-orders_items.csv.zip")
+products = pd.read_csv("5784/noahs-products.csv.zip")
+
+# %%
+os.system("rm -rf 5784")
 
 
 # %%
@@ -205,11 +211,6 @@ print(customers.pipe(one_the_investigator).pipe(answer))
 # drive](https://hanukkah.bluebird.sh/5784/data) you had just put back in her
 # hand. She said, “I know it’s a long shot, but is there any chance you could
 # find their phone number?”
-
-# %%
-orders = pd.read_csv("5784/noahs-orders.csv.zip", parse_dates=["ordered", "shipped"])
-orders_items = pd.read_csv("5784/noahs-orders_items.csv.zip")
-products = pd.read_csv("5784/noahs-products.csv.zip")
 
 
 # %%
@@ -356,8 +357,10 @@ def zodiac_characteristics(
     Returns
     -------
     dict[str, list[str | int]]
-        A dictionary containing zodiac characteristics: - 'dates': List of date
-        strings. - 'month': List of month values. - 'days': List of day values.
+        A dictionary containing zodiac characteristics:
+        - 'dates': List of date strings.
+        - 'month': List of month values.
+        - 'days': List of day values.
     """
     return (
         (df.loc[df["Sign"] == zodiac_sign.value].filter(like="Sun", axis=1).T)

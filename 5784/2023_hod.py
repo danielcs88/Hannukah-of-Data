@@ -1,11 +1,12 @@
 # %%
 # ruff: noqa: E402
-# pylint: disable=wrong-import-position missing-module-docstring invalid-name missing-function-docstring
+# pylint: disable=wrong-import-position missing-module-docstring invalid-name missing-function-docstring too-many-lines
 import os
 
 # %% [markdown]
 # # Hanukkah of Data/5784
-#
+
+# %% [markdown]
 # ## Noah’s Market
 #
 # Welcome to “Noah’s Market”, a bustling mom-and-pop everything store in
@@ -180,7 +181,7 @@ def one_the_investigator(df: pd.DataFrame) -> pd.DataFrame:
 customers.pipe(one_the_investigator)
 
 # %%
-print(customers.pipe(one_the_investigator).pipe(answer))
+customers.pipe(one_the_investigator).pipe(answer)
 
 # %% [markdown]
 # ## 2. The Contractor
@@ -219,22 +220,29 @@ def two_the_contractor(
     orders_df: pd.DataFrame = orders,
     orders_items_df: pd.DataFrame = orders_items,
     products_df: pd.DataFrame = products,
+    initials: str = "JP",
 ) -> pd.DataFrame:
     return (
         (
-            customers_df.replace([" II", " III", " IV", " Jr."], "")
+            customers_df.replace([" II", " III", " IV", " Jr."], "", regex=True)
             .assign(
-                initials=(
-                    customers_df["name"].str.split(" ").str[0].str[0]
-                    + customers_df["name"].str.split(" ").str[-1].str[0]
+                initials=lambda d: (
+                    d["name"].str.split(" ").str[0].str[0]
+                    + d["name"].str.split(" ").str[-1].str[0]
                 )
             )
-            .merge(orders_df.set_index("ordered").loc["2017"], on="customerid")
-            .query('initials == "JP"')
+            .merge(
+                orders_df.loc[
+                    (orders_df["ordered"].dt.year == 2017)
+                    & ((orders_df["ordered"] - orders_df["shipped"]).dt.seconds <= 60)
+                ],
+                on="customerid",
+            )
+            .loc[lambda d: d["initials"] == initials]
             .merge(orders_items_df, on="orderid")
             .merge(
                 products_df.loc[
-                    products["desc"].str.lower().str.contains("coffee, drip|bagel")
+                    products_df["desc"].str.contains("coffee|bagel&clean", case=False)
                 ],
                 on="sku",
             )
@@ -285,7 +293,7 @@ ZODIAC_LINK = "https://en.wikipedia.org/wiki/Astrological_sign"
 zodiac = pd.read_html(ZODIAC_LINK)[0]
 
 # %%
-display(zodiac)
+zodiac
 
 
 # %%
@@ -339,7 +347,7 @@ class ChineseZodiac(Enum):
 
 # %%
 def zodiac_characteristics(
-    df: pd.DataFrame = zodiac, zodiac_sign: ZodiacSign = ZodiacSign.Cancer
+    zodiac_df: pd.DataFrame = zodiac, zodiac_sign: ZodiacSign = ZodiacSign.Cancer
 ) -> dict[str, list[str | int]]:
     """
     Extracts zodiac characteristics from a DataFrame based on the specified
@@ -347,7 +355,7 @@ def zodiac_characteristics(
 
     Parameters
     ----------
-    df : pd.DataFrame, optional
+    zodiac_df : pd.DataFrame, optional
         The DataFrame containing zodiac information. By default, uses a
         predefined zodiac DataFrame.
     zodiac_sign : ZodiacSign, optional
@@ -363,7 +371,11 @@ def zodiac_characteristics(
         - 'days': List of day values.
     """
     return (
-        (df.loc[df["Sign"] == zodiac_sign.value].filter(like="Sun", axis=1).T)
+        (
+            zodiac_df.loc[zodiac_df["Sign"] == zodiac_sign.value]
+            .filter(like="Sun", axis=1)
+            .T
+        )
         .set_axis(["dates"], axis="columns")
         .assign(
             timestamp_fmt=lambda d: pd.to_datetime(d["dates"], format="%d %B"),
@@ -381,7 +393,7 @@ zodiac.pipe(zodiac_characteristics, ZodiacSign.Sagittarius)
 
 # %%
 def chinese_sign_years(
-    df: pd.DataFrame = customers,
+    customers_df: pd.DataFrame = customers,
     chinese_zodiac_animal: ChineseZodiac = ChineseZodiac.Rabbit,
 ) -> set[int]:
     """
@@ -390,7 +402,7 @@ def chinese_sign_years(
 
     Parameters
     ----------
-    df : pd.DataFrame, optional
+    customers_df : pd.DataFrame, optional
         The DataFrame containing customer information. By default, uses a
         predefined 'customers' DataFrame.
     chinese_zodiac_animal : ChineseZodiac, optional
@@ -403,11 +415,17 @@ def chinese_sign_years(
         A set of birth years corresponding to customers with the specified
         Chinese zodiac sign.
     """
-    return set(
-        pd.to_numeric(
-            pd.read_html(chinese_zodiac_animal.value)[2]["Start date"].str[-4:]
-        )
-    ) & set(df["birthdate"].dt.year)
+
+    tables = pd.read_html(chinese_zodiac_animal.value)
+
+    for i, d in enumerate(tables):
+        cols = list(d.columns)
+        if "Start date" in cols:
+            date_table_index = i
+
+    return set(pd.to_numeric(tables[date_table_index]["Start date"].str[-4:])) & set(
+        customers_df["birthdate"].dt.year
+    )
 
 
 # %%
@@ -475,7 +493,7 @@ pd.Series(
 
 # %%
 def three_the_neighbor(
-    df: pd.DataFrame = customers,
+    customers_df: pd.DataFrame = customers,
     western_astrology_sign: ZodiacSign = ZodiacSign.Cancer,
     chinese_astrology_animal: ChineseZodiac = ChineseZodiac.Rabbit,
 ) -> pd.DataFrame:
@@ -484,14 +502,14 @@ def three_the_neighbor(
     )
     the_contractor = two_the_contractor()
     return (
-        df.loc[df["birthdate"].isin(dates)]
+        customers_df.loc[customers_df["birthdate"].isin(dates)]
         .assign(
             zip_code=lambda d: d["citystatezip"].str[-5:],
             neighbor=lambda d: d["zip_code"]
             == the_contractor["citystatezip"].str[-5:].iloc[0],
         )
         .loc[lambda d: d["neighbor"]]
-        .filter(df.columns)
+        .filter(customers_df.columns)
     )
 
 
@@ -501,6 +519,9 @@ customers.pipe(three_the_neighbor).pipe(display)
 # %%
 customers.pipe(three_the_neighbor).pipe(answer)
 
+
+# %%
+del zodiac
 
 # %% [markdown]
 # ## 4. The Early Bird
@@ -558,3 +579,490 @@ customers.pipe(four_the_early_bird).pipe(display)
 
 # %%
 customers.pipe(four_the_early_bird).pipe(answer)
+
+
+# %% [markdown]
+# ## 5. The Cat Lady
+#
+# “Yes, I did have that tapestry for a little bit. I even cleaned a blotchy
+# section that turned out to be a friendly koala.
+#
+# “But it was still really dirty, so when I was going through a Marie Kondo
+# phase, I decided it wasn’t sparking joy anymore.
+#
+# “I listed it on Freecycle, and a woman in Staten Island came to pick it up.
+# She was wearing a ‘Noah’s Market’ sweatshirt, and it was just covered in cat
+# hair. When I suggested that a clowder of cats might ruin such a fine tapestry,
+# she looked at me funny. She said “I only have ten or eleven cats, and anyway
+# they are getting quite old now, so I doubt they’d care about some old rug.”
+#
+# “It took her 20 minutes to stuff the tapestry into some plastic bags she
+# brought because it was raining. I spent the evening cleaning my apartment.”
+#
+# What’s the phone number of the woman from Freecycle?
+
+
+# %%
+def top_customers_id_cat_products(
+    customers_df: pd.DataFrame = customers,
+    orders_df: pd.DataFrame = orders,
+    orders_items_df: pd.DataFrame = orders_items,
+    products_df: pd.DataFrame = products,
+    new_york_borough: str = "Staten Island",
+) -> pd.Series:
+    """
+    Returns the mode (most frequent) customer ID of customers in a specified New
+    York borough who have purchased products containing the term "cat" in their
+    description.
+
+    Parameters
+    ----------
+    customers_df : pd.DataFrame, optional
+        DataFrame containing customer information, by default customers
+    orders_df : pd.DataFrame, optional
+        DataFrame containing order information, by default orders
+    orders_items_df : pd.DataFrame, optional
+        DataFrame containing order items information, by default orders_items
+    products_df : pd.DataFrame, optional
+        DataFrame containing product information, by default products
+    new_york_borough : str, optional
+        Name of the New York borough to filter customers, by default "Staten
+        Island"
+
+    Returns
+    -------
+    pd.Series
+        Series containing the mode customer ID of customers meeting the
+        specified criteria.
+    """
+    return pd.Series(
+        customers_df.loc[
+            customers_df["citystatezip"].str.split(",").str[0] == new_york_borough
+        ]
+        .merge(orders_df, on="customerid")
+        .merge(orders_items_df, on="orderid")
+        .merge(products_df, on="sku")
+        .loc[
+            lambda d: d["sku"].isin(
+                products_df.loc[
+                    products_df["desc"].str.contains("senior cat", case=False)
+                ]
+                .agg({"sku": "unique"})
+                .squeeze()
+            )
+        ]
+        .agg({"customerid": "mode"})
+        .squeeze()
+    )
+
+
+# %%
+customers.pipe(top_customers_id_cat_products)
+
+
+# %%
+def five_the_cat_lady(customers_df: pd.DataFrame = customers) -> pd.DataFrame:
+    """
+    Filters and returns a DataFrame containing information about customers who
+    are identified as top customers based on their purchase history of products
+    containing the term "cat" in the description.
+
+    Parameters
+    ----------
+    customers_df : pd.DataFrame, optional
+        DataFrame containing customer information, by default customers
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing information about customers identified as top
+        customers based on their purchase history of "cat" products.
+    """
+    top_customers_id_cat_products_series: pd.Series = top_customers_id_cat_products()
+    return customers_df.loc[
+        customers_df["customerid"].isin(top_customers_id_cat_products_series)
+    ]
+
+
+# %%
+customers.pipe(five_the_cat_lady)
+
+# %%
+(customers.pipe(five_the_cat_lady).pipe(display))
+
+# %%
+(customers.pipe(five_the_cat_lady).pipe(answer))
+
+
+# %% [markdown]
+# ## 6. The Bargain Hunter
+#
+# “Why yes, I did have that rug for a little while in my living room! My cats
+# can’t see a thing but they sure chased after the squirrel on it like it was
+# dancing in front of their noses.
+#
+# “It was a nice rug and they were surely going to ruin it, so I gave it to my
+# cousin, who was moving into a new place that had wood floors.
+#
+# “She refused to buy a new rug for herself–she said they were way too
+# expensive. She’s always been very frugal, and she clips every coupon and shops
+# every sale at Noah’s Market. In fact I like to tease her that Noah actually
+# loses money whenever she comes in the store.
+#
+# “I think she’s been taking it too far lately though. Once the subway fare
+# increased, she stopped coming to visit me. And she’s really slow to respond to
+# my texts. I hope she remembers to invite me to the family reunion next year.”
+#
+# Can you find her cousin’s phone number?
+
+
+# %%
+def six_the_bargain_hunter(
+    customers_df: pd.DataFrame = customers,
+    orders_df: pd.DataFrame = orders,
+    orders_items_df: pd.DataFrame = orders_items,
+    products_df: pd.DataFrame = products,
+) -> pd.DataFrame:
+    """
+    Filters a DataFrame of customers to include only those who are identified as
+    savvy bargain hunters.
+
+    Parameters
+    ----------
+    customers_df : pd.DataFrame, optional
+        DataFrame containing customer information, by default customers.
+    orders_df : pd.DataFrame, optional
+        DataFrame containing order information, by default orders.
+    orders_items_df : pd.DataFrame, optional
+        DataFrame containing order items information, by default orders_items.
+    products_df : pd.DataFrame, optional
+        DataFrame containing product information, by default products.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing information about customers identified as savvy
+        bargain hunters.
+
+    Notes
+    -----
+    This function identifies customers who are considered bargain hunters based
+    on their purchase behavior. The criteria include purchasing products at a
+    unit price less than or equal to the wholesale cost. The resulting DataFrame
+    includes customer information for those who meet the specified criteria.
+    """
+    bh_customer_id = (
+        orders_items_df.groupby(["sku", "orderid"], as_index=False)
+        .agg({"unit_price": "min"})
+        .merge(products_df, on="sku")
+        .loc[lambda d: d["unit_price"] <= d["wholesale_cost"]]
+        .merge(orders_df, on="orderid")
+        .merge(customers_df, on="customerid")
+        .agg({"customerid": "mode"})
+        .iloc[0]
+    )
+
+    return customers_df.loc[customers_df["customerid"].isin(bh_customer_id)]
+
+
+# %%
+customers.pipe(six_the_bargain_hunter).pipe(display)
+
+# %%
+customers.pipe(six_the_bargain_hunter).pipe(answer)
+
+
+# %% [markdown]
+# ## 7. The Meet Cute
+#
+# “Oh that tapestry, with the colorful toucan on it! I’ll tell you what happened
+# to it.
+#
+# “One day, I was at Noah’s Market, and I was just about to leave when someone
+# behind me said ‘Miss! You dropped something!’
+#
+# “Well I turned around to see this cute guy holding an item I had bought. He
+# said, ‘I got the same thing!’ We laughed about it and wound up swapping items
+# because I wanted the color he got. We had a moment when our eyes met and my
+# heart stopped for a second. I asked him to get some food with me and we spent
+# the rest of the day together.
+#
+# “Before long I moved into his place, but the romance faded quickly, as he
+# wasn’t the prince I imagined. I left abruptly one night, forgetting the
+# tapestry on his wall. But by then, it symbolized our love, and I wanted
+# nothing more to do with it. For all I know, he still has it.”
+#
+# Can you figure out her ex-boyfriend’s phone number?
+
+
+# %%
+def date_hour_mm(orders_df: pd.DataFrame = orders) -> pd.DataFrame:
+    """
+    Extracts and formats the date and hour from the 'ordered' column in a
+    DataFrame of order information.
+
+    Parameters
+    ----------
+    orders_df : pd.DataFrame, optional
+        DataFrame containing order information, by default orders.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with an additional 'date_hour' column representing the
+        formatted date and hour.
+
+    Notes
+    -----
+    This function extracts the date and hour information from the 'ordered'
+    column and adds a new column 'date_hour' to the DataFrame. The 'date_hour'
+    column is formatted as 'MM/DD/YYYY HH:MM' to represent the month, day,
+    year, and hour of each order.
+    """
+    return orders_df.assign(
+        date_hour=lambda df: df["ordered"].dt.strftime("%m/%d/%Y %H:%M")
+    )
+
+
+# %%
+def color_agnostic_item_name(products_df: pd.DataFrame = products) -> pd.DataFrame:
+    """
+    Generates a new column for items, removing color information to create
+    color-agnostic names.
+
+    Parameters
+    ----------
+    products_df : pd.DataFrame, optional
+        DataFrame containing product information, by default products.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with an additional 'desc_color_agnostic' column representing
+        color-agnostic item names.
+
+    Notes
+    -----
+    This function creates a new column 'desc_color_agnostic' by removing color
+    information from the 'desc' column. It ensures that item names are
+    represented without specific color details.
+
+    Examples
+    --------
+    >>> color_agnostic_item_name(df)
+    # Returns a DataFrame with 'desc_color_agnostic' column:
+    # 'Manual Mixer (orange)' -> 'Manual Mixer'
+
+    """
+    return (
+        products_df.assign(
+            color_list=lambda df: df["desc"]
+            .str.split("(")
+            .str[1]
+            .str.replace(")", "")
+            .str.split()
+        )
+        .assign(color=lambda df: df["color_list"].str[0])
+        .dropna()
+        .loc[lambda df: df["color"].str[0].str.islower()]
+        .drop(columns=["color_list"])
+        .assign(desc_color_agnostic=lambda df: df["desc"].str.split(r" \(").str[0])
+    )
+
+
+# %%
+def filter_in_store_orders(orders_df: pd.DataFrame = orders) -> pd.DataFrame:
+    """
+    Filters out in-store orders from a DataFrame of order information.
+
+    Parameters
+    ----------
+    orders_df : pd.DataFrame, optional
+        DataFrame containing order information, by default orders.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with in-store orders removed.
+
+    Notes
+    -----
+    This function filters out orders that were bought in-store by comparing the
+    'ordered' and 'shipped' columns. Only orders with distinct 'ordered' and
+    'shipped' timestamps are retained.
+
+    Example
+    -------
+    >>> filter_in_store_orders(df)
+    # Returns a DataFrame with in-store orders removed.
+    """
+    return orders_df.loc[orders_df["ordered"] == orders_df["shipped"]]
+
+
+# %%
+def bargain_hunter_in_store_color_items(
+    products_df: pd.DataFrame = products,
+    orders_items_df: pd.DataFrame = orders_items,
+    orders_df: pd.DataFrame = orders,
+) -> pd.DataFrame:
+    return (
+        products_df.pipe(color_agnostic_item_name)
+        .merge(orders_items_df, on="sku")
+        .merge(orders_df, on="orderid")
+        .loc[
+            lambda d: (
+                d["customerid"].isin(six_the_bargain_hunter().loc[:, "customerid"])
+            )
+        ]
+        .pipe(filter_in_store_orders)
+        .pipe(date_hour_mm)
+    )
+
+
+# %%
+def the_order_of_the_meet(
+    orders_df: pd.DataFrame = orders,
+    orders_items_df: pd.DataFrame = orders_items,
+    products_df: pd.DataFrame = products,
+) -> pd.DataFrame:
+    """
+    Combines and filters various DataFrames to create a comprehensive dataset
+    of order information.
+
+    Parameters
+    ----------
+    orders_df : pd.DataFrame, optional
+        DataFrame containing order information, by default orders.
+    orders_items_df : pd.DataFrame, optional
+        DataFrame containing order items information, by default orders_items.
+    products_df : pd.DataFrame, optional
+        DataFrame containing product information, by default products.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with a filtered and merged dataset representing comprehensive
+        order information.
+    """
+    bargain_hunter = bargain_hunter_in_store_color_items()
+    return (
+        orders_df.pipe(filter_in_store_orders)
+        .merge(orders_items_df, on="orderid")
+        .pipe(date_hour_mm)
+        .merge(products_df.pipe(color_agnostic_item_name), on="sku")
+        .merge(
+            bargain_hunter.loc[:, ["desc_color_agnostic", "date_hour"]],
+            on=["desc_color_agnostic", "date_hour"],
+        )
+        .loc[lambda df: ~df["customerid"].isin(bargain_hunter["customerid"])]
+        .filter(bargain_hunter.columns)
+        .pipe(
+            lambda cute_guy: pd.concat(
+                [
+                    bargain_hunter.loc[
+                        lambda b: (
+                            b["desc_color_agnostic"].isin(
+                                cute_guy["desc_color_agnostic"]
+                            )
+                        )
+                        & (b["date_hour"].isin(cute_guy["date_hour"]))
+                    ],
+                    cute_guy,
+                ]
+            )
+        )
+    )
+
+
+# %%
+orders.pipe(the_order_of_the_meet)
+
+
+# %%
+def seven_the_meet_cute(customers_df: pd.DataFrame = customers) -> pd.DataFrame:
+    the_meet = the_order_of_the_meet()
+    the_couple_customer_ids = the_meet["customerid"]
+    the_bargain_hunter = six_the_bargain_hunter()["customerid"]
+    the_meet_cute_id = set(the_couple_customer_ids) - set(the_bargain_hunter)
+    return customers_df.loc[customers_df["customerid"].isin(list(the_meet_cute_id))]
+
+
+# %%
+customers.pipe(seven_the_meet_cute).pipe(display)
+
+# %%
+customers.pipe(seven_the_meet_cute).pipe(answer)
+
+
+# %% [markdown]
+# ## 8. The Collector
+#
+#
+# “Oh that damned woman! She moved in, clogged my bathtub, left her coupons all
+# over the kitchen, and then just vanished one night without leaving so much as
+# a note.
+#
+# Except she did leave behind that nasty carpet. I spent months cleaning one
+# corner, only to discover a snake hiding in the branches! I knew then that she
+# was never coming back, and I had to get it out of my sight.
+#
+# “Well, I don’t have any storage here, and it didn’t seem right to sell it, so
+# I gave it to my sister. She wound up getting a newer and more expensive
+# carpet, so she gave it to an acquaintance of hers who collects all sorts of
+# junk. Apparently he owns an entire set of Noah’s collectibles! He probably
+# still has the carpet, even.
+#
+# “My sister is away for the holidays, but I can have her call you in a few
+# weeks.”
+#
+# The family dinner is tonight! Can you find the collector’s phone number in
+# time?
+
+
+# %%
+def eight_the_collector(
+    customers_df: pd.DataFrame = customers,
+    orders_df: pd.DataFrame = orders,
+    orders_items_df: pd.DataFrame = orders_items,
+):
+    top_buyer = (
+        orders_df.merge(orders_items_df, on="orderid")["customerid"]
+        .value_counts()
+        .idxmax()
+    )
+
+    return customers_df.loc[customers["customerid"] == top_buyer]
+
+
+# %%
+customers.pipe(eight_the_collector).pipe(display)
+
+# %%
+customers.pipe(eight_the_collector).pipe(answer)
+
+# %% [markdown]
+# ## 9. Epilogue
+#
+# “Oh yes, that magnificant Persian carpet! An absolute masterpiece, with a
+# variety of interesting animals congregating around a Tree of Life. As a
+# collector, I couldn’t believe when it fell into my lap.
+#
+# “A friend of mine had taken it off her brother’s hands, and she didn’t know
+# what to do with it. I saw her one day, and she was about to put an old rug out
+# at the curb. It looked like it had been through a lot, but it was remarkably
+# not that dirty. It still took quite a bit of effort and no small amount of rug
+# cleaner, but ultimately I managed to get the last bits of grime out of it.
+#
+# “I actually live right down the street from Noah’s Market–I’m a huge fan and I
+# shop there all the time! I even have a one-of-a-kind scale model of Noah’s Ark
+# that makes a complete set of Noah’s collectibles.
+#
+# “I would love for Noah to have his rug once again to enjoy.”
+#
+# [See Noah’s entire tapestry](https://hanukkah.bluebird.sh/5784/)
+#
+# Now try for a [speedrun](https://hanukkah.bluebird.sh/5784-speedrun) with
+# a [fresh dataset](https://hanukkah.bluebird.sh/5784-speedrun/data).
+#
+#
+# ![hod_5784_finish](hod_5784_finish.gif)

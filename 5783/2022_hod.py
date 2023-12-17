@@ -791,4 +791,4 @@ print(answer(puzzle_7))
 # “I would love for Noah to have his rug once again to enjoy.”
 
 # %% [markdown]
-# ![HoD_2022](https://bit.ly/3YRdAZ2)
+# ![HoD_2022](5783_tree.gif)
